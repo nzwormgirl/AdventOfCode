@@ -278,40 +278,46 @@ wires <- read.table("2019/data/Day3.txt",header = F,sep=",")
 wire1 <- as.vector(unlist(wires[1,]))
 wire2 <- as.vector(unlist(wires[2,]))
 
+# function to calculate position of coordinates in space
 calculatePosition <- function(wire){
-
+  # generate empty dataframe
   position <- data.frame(x=rep(0,length(wire)),y=rep(0,length(wire)))
   
+  # for each position along the wire, move in specified direction
   for(i in 1:length(wire)){
+    # move right x cells
     if(grepl("^R",wire[i])) {
       position[i+1,"x"] <- position[i,"x"] + parse_number(wire[i])
       position[i+1,"y"] <- position[i,"y"]
       }
-    
+    # move left x cells
     if(grepl("^L",wire[i])){
       position[i+1,"x"] <- position[i,"x"] - parse_number(wire[i])
       position[i+1,"y"] <- position[i,"y"]
     } 
-    
+    # move up x cells
     if(grepl("^U",wire[i])) {
       position[i+1,"y"] <- position[i,"y"] + parse_number(wire[i])
       position[i+1,"x"] <- position[i,"x"]
       }
-    
+    # move down x cells
     if(grepl("^D",wire[i])) {
       position[i+1,"y"] <- position[i,"y"] - parse_number(wire[i])
       position[i+1,"x"] <- position[i,"x"]
       }
   }
   
-  
   return(position)
 }
 
+# generate path for each wire
 path1 <- st_linestring(as.matrix(calculatePosition(wire1)))
 path2 <- st_linestring(as.matrix(calculatePosition(wire2)))
+
+# calculate wire intersection points
 intersection <- st_intersection(path1,path2)
 
+# plot wires and intersection points
 ggplot() +
   geom_sf(data=path1, linetype = "solid") +
   geom_sf(data=path2, linetype = "dashed") +
@@ -319,15 +325,18 @@ ggplot() +
   geom_point(aes(x=0,y=0),color="red",size=1) +
   theme_minimal()
 
+# create dataframe of intersection point coordinates
 intersectionPoints <- st_coordinates(intersection) %>% 
   as.data.frame 
 
+# calculate minimum manhattan distance to start
 intersectionPoints %>% 
   # slice(-1) %>% 
   mutate(sum = abs(0-X)+abs(0-Y)) %>% 
   filter(!sum %in% 0) %>% 
   filter(sum %in% min(sum)) %>% 
   pull(sum)
+
 ```
 
 ##--- Part Two ---
@@ -360,13 +369,16 @@ U98,R91,D20,R16,D67,R40,U7,R15,U6,R7 = 410 steps
 What is the fewest combined steps the wires must take to reach an intersection?
 
 ```{r}
+
+# calculate distance along each wire to each intersection point
 distances <- bind_cols(
   wire1 = rgeos::gProject(as(path1,"Spatial"), sp::SpatialPoints(intersectionPoints), normalized=FALSE),
   wire2 = rgeos::gProject(as(path2,"Spatial"), sp::SpatialPoints(intersectionPoints), normalized=FALSE)
 ) %>% 
   mutate(distance = wire1 + wire2)  %>% 
   filter(distance != 0)
-  
+
+# find minimum distance  
 min(distances$distance)
 
 ```
