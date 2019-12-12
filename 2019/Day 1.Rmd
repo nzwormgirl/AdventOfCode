@@ -128,12 +128,38 @@ Once you have a working computer, the first step is to restore the gravity assis
 input <- c(1,1,1,4,99,5,6,0,99)
 
 input <- as.vector(unlist(read.table("2019/data/Day2.1.txt",header = F,sep=",")))
-input[1+1] <- 12
-input[2+1] <- 2
+# input[1+1] <- 12
+# input[2+1] <- 2
+# 
+# for(cell in seq(1,length(input),by=4)){
+#   
+#   message(cell)
+#   
+#   # if value == 99, stop program
+#   if(input[cell] == 99){
+#     break
+#   } 
+#   
+#   # if value == 1, add values
+#   if(input[cell] == 1){
+#     input[input[cell+3]+1] <- input[input[cell+1]+1] + input[input[cell+2]+1]
+#   } 
+#   
+#   # if value == 1, multiply values
+#   if(input[cell] == 2){
+#     input[input[cell+3]+1] <- input[input[cell+1]+1] * input[input[cell+2]+1]
+#   }
+#   print(input)
+# }
 
-for(cell in seq(1,length(input),by=4)){
+# function version of Day 1 Part 1
+intCode <- function(input,one=12,two =1,step = 4){
+  input[1+1] <- one
+  input[2+1] <- two
   
-  message(cell)
+  for(cell in seq(1,length(input),by=step)){
+  
+  # message(cell)
   
   # if value == 99, stop program
   if(input[cell] == 99){
@@ -149,10 +175,14 @@ for(cell in seq(1,length(input),by=4)){
   if(input[cell] == 2){
     input[input[cell+3]+1] <- input[input[cell+1]+1] * input[input[cell+2]+1]
   }
-  print(input)
+  }
+  return(input)
+  
 }
 
-input[1]
+output <- intCode(input,one=12,two =1,step = 4) 
+
+output[1]
 
 
 
@@ -181,41 +211,53 @@ Find the input noun and verb that cause the program to produce the output 196907
 
 test <- expand.grid(seq(0,99),seq(0,99))
 
-inputOrig <- as.vector(unlist(read.table("2019/data/Day2.1.txt",header = F,sep=",")))
+input <- as.vector(unlist(read.table("2019/data/Day2.1.txt",header = F,sep=",")))
 
 for(i in 1:nrow(test)){
-  message(i)
-  input <-inputOrig
-  input[1+1] <- test[i,1]
-  input[2+1] <- test[i,2]
+  output <- intCode(input,one=test[i,1],two = test[i,2])[1]
   
-  for(cell in seq(1,length(input),by=4)){
-    
-    # if value == 99, stop program
-    if(input[cell] == 99){
-      break
-    } 
-    
-    # if value == 1, add values
-    if(input[cell] == 1){
-      input[input[cell+3]+1] <- input[input[cell+1]+1] + input[input[cell+2]+1]
-    } 
-    
-    # if value == 1, multiply values
-    if(input[cell] == 2){
-      input[input[cell+3]+1] <- input[input[cell+1]+1] * input[input[cell+2]+1]
-    }
-    
-  }
-  # print(input)
-  if(input[1] == 19690720) {
-    print(input)
+  if(output == 19690720) {
+    print(output)
+    print(c(test[i,1],test[i,2]))
+    print(100 * test[i,1] + test[i,2])
     break
   }
   
 }
 
-100 * input[1+1] + input[2+1]
+# for(i in 1:nrow(test)){
+#   message(i)
+#   input <-inputOrig
+#   input[1+1] <- test[i,1]
+#   input[2+1] <- test[i,2]
+#   
+#   for(cell in seq(1,length(input),by=4)){
+#     
+#     # if value == 99, stop program
+#     if(input[cell] == 99){
+#       break
+#     } 
+#     
+#     # if value == 1, add values
+#     if(input[cell] == 1){
+#       input[input[cell+3]+1] <- input[input[cell+1]+1] + input[input[cell+2]+1]
+#     } 
+#     
+#     # if value == 1, multiply values
+#     if(input[cell] == 2){
+#       input[input[cell+3]+1] <- input[input[cell+1]+1] * input[input[cell+2]+1]
+#     }
+#     
+#   }
+#   # print(input)
+#   if(input[1] == 19690720) {
+#     print(input)
+#     break
+#   }
+#   
+# }
+# 
+# 100 * input[1+1] + input[2+1]
 
 ```
 
@@ -449,6 +491,185 @@ finalPotentialPasswords <- unlist(sapply(potentialPasswords,finalCheck))
 
 # number of final potential passwords
 length(finalPotentialPasswords)
+
+```
+
+#--- Day 5: Sunny with a Chance of Asteroids ---
+You're starting to sweat as the ship makes its way toward Mercury. The Elves suggest that you get the air conditioner working by upgrading your ship computer to support the Thermal Environment Supervision Terminal.
+
+The Thermal Environment Supervision Terminal (TEST) starts by running a diagnostic program (your puzzle input). The TEST diagnostic program will run on your existing Intcode computer after a few modifications:
+
+First, you'll need to add two new instructions:
+
+Opcode 3 takes a single integer as input and saves it to the position given by its only parameter. For example, the instruction 3,50 would take an input value and store it at address 50.
+Opcode 4 outputs the value of its only parameter. For example, the instruction 4,50 would output the value at address 50.
+Programs that use these instructions will come with documentation that explains what should be connected to the input and output. The program 3,0,4,0,99 outputs whatever it gets as input, then halts.
+
+Second, you'll need to add support for parameter modes:
+
+Each parameter of an instruction is handled based on its parameter mode. Right now, your ship computer already understands parameter mode 0, position mode, which causes the parameter to be interpreted as a position - if the parameter is 50, its value is the value stored at address 50 in memory. Until now, all parameters have been in position mode.
+
+Now, your ship computer will also need to handle parameters in mode 1, immediate mode. In immediate mode, a parameter is interpreted as a value - if the parameter is 50, its value is simply 50.
+
+Parameter modes are stored in the same value as the instruction's opcode. The opcode is a two-digit number based only on the ones and tens digit of the value, that is, the opcode is the rightmost two digits of the first value in an instruction. Parameter modes are single digits, one per parameter, read right-to-left from the opcode: the first parameter's mode is in the hundreds digit, the second parameter's mode is in the thousands digit, the third parameter's mode is in the ten-thousands digit, and so on. Any missing modes are 0.
+
+For example, consider the program 1002,4,3,4,33.
+
+The first instruction, 1002,4,3,4, is a multiply instruction - the rightmost two digits of the first value, 02, indicate opcode 2, multiplication. Then, going right to left, the parameter modes are 0 (hundreds digit), 1 (thousands digit), and 0 (ten-thousands digit, not present and therefore zero):
+
+ABCDE
+ 1002
+
+DE - two-digit opcode,      02 == opcode 2
+ C - mode of 1st parameter,  0 == position mode
+ B - mode of 2nd parameter,  1 == immediate mode
+ A - mode of 3rd parameter,  0 == position mode,
+                                  omitted due to being a leading zero
+This instruction multiplies its first two parameters. The first parameter, 4 in position mode, works like it did before - its value is the value stored at address 4 (33). The second parameter, 3 in immediate mode, simply has value 3. The result of this operation, 33 * 3 = 99, is written according to the third parameter, 4 in position mode, which also works like it did before - 99 is written to address 4.
+
+Parameters that an instruction writes to will never be in immediate mode.
+
+Finally, some notes:
+
+It is important to remember that the instruction pointer should increase by the number of values in the instruction after the instruction finishes. Because of the new instructions, this amount is no longer always 4.
+Integers can be negative: 1101,100,-1,4,0 is a valid program (find 100 + -1, store the result in position 4).
+The TEST diagnostic program will start by requesting from the user the ID of the system to test by running an input instruction - provide it 1, the ID for the ship's air conditioner unit.
+
+It will then perform a series of diagnostic tests confirming that various parts of the Intcode computer, like parameter modes, function correctly. For each test, it will run an output instruction indicating how far the result of the test was from the expected value, where 0 means the test was successful. Non-zero outputs mean that a function is not working correctly; check the instructions that were run before the output instruction to see which one failed.
+
+Finally, the program will output a diagnostic code and immediately halt. This final output isn't an error; an output followed immediately by a halt means the program finished. If all outputs were zero except the diagnostic code, the diagnostic program ran successfully.
+
+After providing 1 to the only input instruction and passing all the tests, what diagnostic code does the program produce?
+
+```{r}
+input4 <- as.vector(unlist(read.table("2019/data/Day5.txt",header = F,sep=",")))
+
+input <- c(3,0,4,0,99)
+input <- c(1002,4,3,4,33)
+
+# function version of Day 1 Part 1
+intCode5 <- function(input,step = 4,parameter){
+  # input[1+1] <- one
+  # input[2+1] <- two
+  
+  for(cell in seq(1,length(input),by=step)){
+  
+    message(cell)
+    # identify opcode
+    opcode <- input[cell] %% 100
+    # identify parameter modes
+    modes <- unlist(strsplit(as.character(input[cell]),""))
+    if(length(modes)==4) modes <- c(0,modes[1:2])
+    if(length(modes)==5) modes <- modes[1:3]
+    names(modes) <- c("A","B","C")
+     
+    
+    # if value == 99, stop program
+    if(opcode == 99){
+      break
+    } 
+    
+    # if value == 1, add values
+    if(opcode == 1){
+      input[input[cell+3]+1] <- input[input[cell+1]+1] + input[input[cell+2]+1]
+    } 
+    
+    # if value == 1, multiply values
+    if(opcode == 2){
+      input[input[cell+3]+1] <- input[input[cell+1]+1] * input[input[cell+2]+1]
+    }
+    
+    # if value == 3, put input parameter into cell specified in slot 1
+    if(opcode == 3){
+      input[input[cell+1]+1] <- parameter
+    }
+    
+  }
+  return(input)
+  
+}
+
+intCode(input,one=12,two =1,step = 4) 
+
+
+
+```
+
+#--- Day 6: Universal Orbit Map ---
+You've landed at the Universal Orbit Map facility on Mercury. Because navigation in space often involves transferring between orbits, the orbit maps here are useful for finding efficient routes between, for example, you and Santa. You download a map of the local orbits (your puzzle input).
+
+Except for the universal Center of Mass (COM), every object in space is in orbit around exactly one other object. An orbit looks roughly like this:
+
+                  \
+                   \
+                    |
+                    |
+AAA--> o            o <--BBB
+                    |
+                    |
+                   /
+                  /
+In this diagram, the object BBB is in orbit around AAA. The path that BBB takes around AAA (drawn with lines) is only partly shown. In the map data, this orbital relationship is written AAA)BBB, which means "BBB is in orbit around AAA".
+
+Before you use your map data to plot a course, you need to make sure it wasn't corrupted during the download. To verify maps, the Universal Orbit Map facility uses orbit count checksums - the total number of direct orbits (like the one shown above) and indirect orbits.
+
+Whenever A orbits B and B orbits C, then A indirectly orbits C. This chain can be any number of objects long: if A orbits B, B orbits C, and C orbits D, then A indirectly orbits D.
+
+For example, suppose you have the following map:
+
+COM)B
+B)C
+C)D
+D)E
+E)F
+B)G
+G)H
+D)I
+E)J
+J)K
+K)L
+Visually, the above map of orbits looks like this:
+
+        G - H       J - K - L
+       /           /
+COM - B - C - D - E - F
+               \
+                I
+In this visual representation, when two objects are connected by a line, the one on the right directly orbits the one on the left.
+
+Here, we can count the total number of orbits as follows:
+
+D directly orbits C and indirectly orbits B and COM, a total of 3 orbits.
+L directly orbits K and indirectly orbits J, E, D, C, B, and COM, a total of 7 orbits.
+COM orbits nothing.
+The total number of direct and indirect orbits in this example is 42.
+
+What is the total number of direct and indirect orbits in your map data?
+
+```{r}
+require(dplyr)
+require(igraph)
+
+Map <- data.frame(V1 = c("COM)B","B)C","C)D","D)E","E)F","B)G","G)H","D)I","E)J","J)K","K)L"))
+
+Map <- read.table("2019/data/Day6.txt",header = F,sep=",")
+
+orbits <- Map %>% 
+  pull(V1) %>% 
+  as.character() %>% 
+  gsub(")",",",.) %>% 
+  strsplit(.,",") %>% 
+  unlist() %>% 
+  graph(.) 
+
+plot(orbits)
+
+paths <- all_simple_paths(orbits,from="COM",mode="out")
+
+lapply(1:length(paths), function(i)length(paths[[i]])) %>% 
+  unlist() %>% 
+  sum() - length(paths)
+  
 
 ```
 
