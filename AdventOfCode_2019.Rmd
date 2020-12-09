@@ -4,6 +4,11 @@ author: "Amy Whitehead"
 output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message= FALSE, warning = FALSE,comment = "")
+```
+
+
 # Day 1: The Tyranny of the Rocket Equation
 Santa has become stranded at the edge of the Solar System while delivering presents to other planets! To accurately calculate his position in space, safely align his warp drive, and return to Earth in time to save Christmas, he needs you to bring him measurements from fifty stars.
 
@@ -28,7 +33,7 @@ What is the sum of the fuel requirements for all of the modules on your spacecra
 ```{r calculate total mass}
 require(tidyverse)
 
-modules <- read.table("2019/data/Day1.1.txt",header = F) 
+modules <- read.table("data/2019/Day1.1.txt",header = F) 
 
 answer <- modules %>% 
   mutate(mass = floor((V1 / 3)) -2) %>% 
@@ -122,7 +127,7 @@ Once you have a working computer, the first step is to restore the gravity assis
 
 input <- c(1,1,1,4,99,5,6,0,99)
 
-input <- as.vector(unlist(read.table("2019/data/Day2.1.txt",header = F,sep=",")))
+input <- as.vector(unlist(read.table("data/2019/Day2.1.txt",header = F,sep=",")))
 # input[1+1] <- 12
 # input[2+1] <- 2
 # 
@@ -208,7 +213,7 @@ Find the input noun and verb that cause the program to produce the output 196907
 
 test <- expand.grid(seq(0,99),seq(0,99))
 
-input <- as.vector(unlist(read.table("2019/data/Day2.1.txt",header = F,sep=",")))
+input <- as.vector(unlist(read.table("data/2019/Day2.1.txt",header = F,sep=",")))
 
 for(i in 1:nrow(test)){
   output <- intCode(input,one=test[i,1],two = test[i,2])[1]
@@ -312,7 +317,7 @@ wire2 <- c("U62","R66","U55","R34","D71","R55","D58","R83")
 wire1 <- c("R98","U47","R26","D63","R33","U87","L62","D20","R33","U53","R51")
 wire2 <- c("U98","R91","D20","R16","D67","R40","U7","R15","U6","R7")
 
-wires <- read.table("2019/data/Day3.txt",header = F,sep=",")
+wires <- read.table("data/2019/Day3.txt",header = F,sep=",")
 
 wire1 <- as.vector(unlist(wires[1,]))
 wire2 <- as.vector(unlist(wires[2,]))
@@ -539,7 +544,7 @@ Finally, the program will output a diagnostic code and immediately halt. This fi
 After providing 1 to the only input instruction and passing all the tests, what diagnostic code does the program produce?
 
 ```{r}
-input4 <- as.vector(unlist(read.table("2019/data/Day5.txt",header = F,sep=",")))
+input4 <- as.vector(unlist(read.table("data/2019/Day5.txt",header = F,sep=",")))
 
 input <- c(3,0,4,0,99)
 input <- c(1002,4,3,4,33)
@@ -649,7 +654,7 @@ require(igraph)
 
 Map <- data.frame(V1 = c("COM)B","B)C","C)D","D)E","E)F","B)G","G)H","D)I","E)J","J)K","K)L"))
 
-Map <- read.table("2019/data/Day6.txt",header = F,sep=",")
+Map <- read.table("data/2019/Day6.txt",header = F,sep=",")
 
 orbits <- Map %>% 
   pull(V1) %>% 
@@ -722,7 +727,7 @@ require(igraph)
 
 Map <- data.frame(V1 = c("COM)B","B)C","C)D","D)E","E)F","B)G","G)H","D)I","E)J","J)K","K)L","K)YOU","I)SAN"))
 
-Map <- read.table("2019/data/Day6.txt",header = F,sep=",")
+Map <- read.table("data/2019/Day6.txt",header = F,sep=",")
 
 orbits <- Map %>% 
   pull(V1) %>% 
@@ -784,3 +789,122 @@ Max thruster signal 65210 (from phase setting sequence 1,0,4,3,2):
 3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,
 1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0
 Try every combination of phase settings on the amplifiers. What is the highest signal that can be sent to the thrusters?
+
+# --- Day 8: Space Image Format ---
+The Elves' spirits are lifted when they realize you have an opportunity to reboot one of their Mars rovers, and so they are curious if you would spend a brief sojourn on Mars. You land your ship near the rover.
+
+When you reach the rover, you discover that it's already in the process of rebooting! It's just waiting for someone to enter a BIOS password. The Elf responsible for the rover takes a picture of the password (your puzzle input) and sends it to you via the Digital Sending Network.
+
+Unfortunately, images sent via the Digital Sending Network aren't encoded with any normal encoding; instead, they're encoded in a special Space Image Format. None of the Elves seem to remember why this is the case. They send you the instructions to decode it.
+
+Images are sent as a series of digits that each represent the color of a single pixel. The digits fill each row of the image left-to-right, then move downward to the next row, filling rows top-to-bottom until every pixel of the image is filled.
+
+Each image actually consists of a series of identically-sized layers that are filled in this way. So, the first digit corresponds to the top-left pixel of the first layer, the second digit corresponds to the pixel to the right of that on the same layer, and so on until the last digit, which corresponds to the bottom-right pixel of the last layer.
+
+For example, given an image 3 pixels wide and 2 pixels tall, the image data 123456789012 corresponds to the following image layers:
+
+Layer 1: 123
+         456
+
+Layer 2: 789
+         012
+The image you received is 25 pixels wide and 6 pixels tall.
+
+To make sure the image wasn't corrupted during transmission, the Elves would like you to find the layer that contains the fewest 0 digits. On that layer, what is the number of 1 digits multiplied by the number of 2 digits?
+
+```{r Day 8 Part 1}
+
+convertToImage <- function(x,myRow,myCol){
+ 
+  myIn <- strsplit(as.character(x),"")[[1]]  %>% 
+    matrix(.,ncol=myCol,byrow = T)
+  
+  myOut <- list()
+  for(i in seq(1,nrow(myIn),by=myRow)){
+    myOut[[i]] <- myIn[i:(i+myRow-1),]
+    
+  }
+  myOut <- Filter(Negate(is.null), myOut)
+  
+  return(myOut)
+}
+
+input <- 123456789012
+convertToImage(input,myRow=2,myCol=3)
+
+input <- scan("data/2019/Day8.txt", quiet = TRUE,what="character")
+image <- convertToImage(input,myRow=6,myCol=25)
+
+sapply(1:length(image),function(i) table(image[[i]])) %>% 
+  t() %>% 
+  data.frame() %>% 
+  filter(X0 %in% min(X0)) %>% 
+  mutate(X1 * X2)
+
+```
+
+##--- Part Two ---
+Now you're ready to decode the image. The image is rendered by stacking the layers and aligning the pixels with the same positions in each layer. The digits indicate the color of the corresponding pixel: 0 is black, 1 is white, and 2 is transparent.
+
+The layers are rendered with the first layer in front and the last layer in back. So, if a given position has a transparent pixel in the first and second layers, a black pixel in the third layer, and a white pixel in the fourth layer, the final image would have a black pixel at that position.
+
+For example, given an image 2 pixels wide and 2 pixels tall, the image data 0222112222120000 corresponds to the following image layers:
+
+Layer 1: 02
+         22
+
+Layer 2: 11
+         22
+
+Layer 3: 22
+         12
+
+Layer 4: 00
+         00
+Then, the full image can be found by determining the top visible pixel in each position:
+
+The top-left pixel is black because the top layer is 0.
+The top-right pixel is white because the top layer is 2 (transparent), but the second layer is 1.
+The bottom-left pixel is white because the top two layers are 2, but the third layer is 1.
+The bottom-right pixel is black because the only visible pixel in that position is 0 (from layer 4).
+So, the final image looks like this:
+
+01
+10
+What message is produced after decoding your image?
+
+```{r}
+require(tidyverse)
+# input <- "0222112222120000"
+# 
+# image <- convertToImage(input,2,2)
+
+findFirst <- function(x){first(na.omit(x))}
+
+visualiseImage <- function(input,myRow=2,myCol=2){
+  myIn <- matrix(NA,ncol=nrow(input[[1]])*ncol(input[[1]]),nrow=length(input))
+  for(i in seq_len(length(input))){
+    myIn[i,] <- parse_number(as.vector(image[[i]]))
+    
+  }
+  
+  myIn[myIn==2] <- NA
+  
+  
+  myOut <- apply(myIn,2,findFirst) %>% 
+    matrix(.,ncol=ncol(input[[1]]),nrow=nrow(input[[1]]),byrow=F)
+  return(myOut)
+}
+
+ visualiseImage(input,myRow = 6,myCol=25) %>% 
+   as.data.frame %>% 
+   rowid_to_column() %>% 
+   gather("name","value",V1:V25) %>% 
+   mutate(name = parse_number(name)) %>% 
+   ggplot(.,aes(x=name,y=rowid,fill = value))+
+   geom_tile()
+  
+
+
+```
+
